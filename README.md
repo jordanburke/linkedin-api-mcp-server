@@ -122,26 +122,48 @@ See [LinkedIn OAuth Documentation](https://learn.microsoft.com/en-us/linkedin/sh
 
 ## ⚙️ Configuration
 
-### Environment Variables
+### Minimal Configuration (Just 3 Variables!)
+
+To get started, you only need these three environment variables:
 
 ```bash
-# Required
+# Required - Get these from LinkedIn Developer Portal
 LINKEDIN_CLIENT_ID=your_client_id
 LINKEDIN_CLIENT_SECRET=your_client_secret
 
-# OAuth Configuration
+# Required for API functionality - Obtain via OAuth flow
+LINKEDIN_ACCESS_TOKEN=your_access_token
+```
+
+### Recommended: Add Auto-Refresh
+
+Add this fourth variable to enable automatic token refresh (prevents token expiration):
+
+```bash
+# Enables automatic token refresh before expiration (~60 min)
+LINKEDIN_REFRESH_TOKEN=your_refresh_token
+```
+
+**How refresh works:**
+
+- The server automatically checks token expiry before each API call
+- If expired, it refreshes using the refresh token (no manual intervention)
+- Failed 401 requests trigger automatic retry with new token
+
+### Optional Configuration
+
+All these have sensible defaults - only override if needed:
+
+```bash
+# OAuth flow (not needed for Docker usage)
 LINKEDIN_REDIRECT_URI=http://localhost:3000/callback
 
-# Access Tokens (obtained via OAuth)
-LINKEDIN_ACCESS_TOKEN=your_access_token
-LINKEDIN_REFRESH_TOKEN=your_refresh_token
-
-# Server Configuration
-TRANSPORT_TYPE=http  # or "stdio"
+# Server settings (defaults shown)
+TRANSPORT_TYPE=http  # or "stdio" for Claude Desktop
 PORT=3000
 HOST=0.0.0.0
 
-# Optional OAuth Protection (for HTTP mode)
+# Optional bearer token auth for HTTP mode
 OAUTH_ENABLED=false
 OAUTH_TOKEN=your_secure_token
 ```
