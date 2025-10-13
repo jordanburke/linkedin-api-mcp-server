@@ -6,7 +6,7 @@ export const tsup: Options = {
   splitting: true,
   sourcemap: true,
   clean: true, // rimraf disr
-  dts: true, // generate dts file for main module
+  dts: process.env.SKIP_DTS !== "true", // generate dts file for main module (skip in Docker builds)
   format: ["cjs", "esm"], // generate cjs and esm files
   minify: env === "production",
   bundle: env === "production",

@@ -248,6 +248,25 @@ The server implements exponential backoff and caching for optimal performance.
 
 ## 🐳 Docker Support
 
+### Using Docker Compose (Recommended)
+
+```bash
+# Create .env file with your credentials
+cp .env.example .env
+# Edit .env with your LinkedIn API credentials
+
+# Start the service
+docker compose up -d
+
+# View logs
+docker compose logs -f
+
+# Stop the service
+docker compose down
+```
+
+### Using Docker Directly
+
 ```bash
 # Build Docker image
 docker build -t linkedin-mcp-server .
@@ -260,6 +279,12 @@ docker run -d \
   -e LINKEDIN_CLIENT_SECRET=yyy \
   -e LINKEDIN_ACCESS_TOKEN=zzz \
   linkedin-mcp-server
+
+# View logs
+docker logs -f linkedin-mcp
+
+# Stop container
+docker stop linkedin-mcp
 ```
 
 ## 🤝 Contributing

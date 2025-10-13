@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  linkedin-mcp:
+    build: .
+    # Or use the published image:
+    # image: ghcr.io/jordanburke/linkedin-api-mcp-server:latest
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    # Or use environment variables directly:
+    # environment:
+    #   - LINKEDIN_CLIENT_ID=${LINKEDIN_CLIENT_ID}
+    #   - LINKEDIN_CLIENT_SECRET=${LINKEDIN_CLIENT_SECRET}
+    #   - LINKEDIN_ACCESS_TOKEN=${LINKEDIN_ACCESS_TOKEN}
+    #   - LINKEDIN_REFRESH_TOKEN=${LINKEDIN_REFRESH_TOKEN}
+    #   - LINKEDIN_REDIRECT_URI=${LINKEDIN_REDIRECT_URI}
+    #   - LINKEDIN_USER_AGENT=${LINKEDIN_USER_AGENT:-LinkedInMCPServer/1.0.0}
+    #   - TRANSPORT_TYPE=${TRANSPORT_TYPE:-http}
+    #   - PORT=${PORT:-3000}
+    #   - HOST=${HOST:-0.0.0.0}
+    #   - OAUTH_ENABLED=${OAUTH_ENABLED:-false}
+    #   - OAUTH_TOKEN=${OAUTH_TOKEN}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
