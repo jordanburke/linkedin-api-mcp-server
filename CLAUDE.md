@@ -4,76 +4,190 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a TypeScript library template using modern tooling for building and publishing npm packages. It uses tsup for bundling, Vitest for testing, and supports both CommonJS and ES modules.
+A Model Context Protocol (MCP) server that provides comprehensive LinkedIn API integration including personal profiles, company pages, content management, and analytics. Built with FastMCP and supports dual transport modes (stdio for Claude Desktop/Cursor, HTTP for remote access).
 
 ## Development Commands
 
-### Pre-Checkin Command
+### Essential Commands
 
-- `pnpm validate` - **Main command**: Format, lint, test, and build everything for checkin
-
-### Formatting
-
-- `pnpm format` - Format code with Prettier (write mode)
-- `pnpm format:check` - Check Prettier formatting without writing
-
-### Linting
-
-- `pnpm lint` - Fix ESLint issues (write mode)
-- `pnpm lint:check` - Check ESLint issues without fixing
+- `pnpm validate` - **Pre-checkin**: Format, lint, test, and build everything
+- `pnpm dev` - Build with watch mode for active development
+- `pnpm serve:dev` - Run server with hot reload using tsx
 
 ### Testing
 
-- `pnpm test` - Run tests once
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:coverage` - Run tests with coverage report
-- `pnpm test:ui` - Launch Vitest UI for interactive testing
+- `pnpm test` - Run all tests
+- `pnpm test:watch` - Watch mode for TDD
+- `pnpm test:coverage` - Generate coverage report
 
-### Building
+### Server Operation
 
-- `pnpm build` - Production build (outputs to `dist/`)
-- `pnpm build:watch` - Watch mode build
-- `pnpm dev` - Development build with watch mode (alias for build:watch)
+- `pnpm start` - Build and run production server
+- `pnpm serve` - Run built server without rebuild
+- `pnpm inspect` - Launch MCP inspector for debugging tools
 
-### Publishing
+### CLI Testing
 
-- `prepublishOnly` - Automatically runs `pnpm validate` before publishing
+```bash
+# Test with environment variables
+LINKEDIN_CLIENT_ID=xxx LINKEDIN_CLIENT_SECRET=yyy LINKEDIN_ACCESS_TOKEN=zzz pnpm serve:dev
 
-### Type Checking
-
-- `pnpm ts-types` - Check TypeScript types with tsc
+# Test CLI flags
+pnpm build && node dist/bin.js --help
+pnpm build && node dist/bin.js --generate-token
+```
 
 ## Architecture
 
+### Two-Client Design Pattern
+
+The codebase uses a dual-client architecture to separate concerns:
+
+1. **LinkedInClient** (`src/client/linkedin-client.ts`)
+   - Personal/Member APIs (profiles, search)
+   - OAuth 2.0 flow management with automatic token refresh
+   - Profile normalization and data transformation
+
+2. **LinkedInMarketingClient** (`src/client/linkedin-marketing-client.ts`)
+   - Company/Organization APIs (Tier 2 Marketing API)
+   - Company posts, analytics, media upload
+   - Follower demographics and page statistics
+   - Requires Marketing Developer Platform partnership
+
+**Key Detail**: Both clients implement singleton pattern via `initialize*()` and `get*()` functions at module level.
+
+### MCP Server Structure
+
+The main server (`src/index.ts`) follows FastMCP patterns:
+
+- **Setup Phase**: `setupLinkedInClients()` initializes both clients and tests authentication
+- **Tool Registration**: 13 tools registered with Zod schema validation
+- **Transport Selection**: Environment variable `TRANSPORT_TYPE` controls stdio vs HTTP mode
+- **Error Handling**: All tools throw descriptive errors; responses use formatted strings
+
+### LinkedIn API Specifics
+
+**Authentication Flow**:
+
+1. Three-legged OAuth 2.0 with authorization code exchange
+2. Automatic token refresh before expiry
+3. 401 response triggers one retry attempt with refreshed token
+
+**URN Format**: All LinkedIn entities use URN identifiers:
+
+- Person: `urn:li:person:{id}`
+- Organization: `urn:li:organization:{id}`
+- Share: `urn:li:share:{id}`
+
+**RESTli Protocol**: All requests include:
+
+- `LinkedIn-Version: 202501`
+- `X-Restli-Protocol-Version: 2.0.0`
+
+### Type System Architecture
+
+Types in `src/types.ts` are organized by domain:
+
+- **Client Config**: OAuth and API configuration
+- **Entities**: Profile, Organization, Post with full/partial variants
+- **Requests**: Search, Create, Upload with Zod-compatible structure
+- **Analytics**: Statistics, Demographics with nested structures
+- **Formatted**: Display-ready types for MCP tool responses
+
+**Important**: Formatters (`src/utils/formatters.ts`) convert API responses to user-friendly markdown strings. All MCP tools return formatted strings, not raw objects.
+
+### Buffer Handling Pattern
+
+When working with file uploads (`uploadMedia` method):
+
+```typescript
+// Convert Buffer or ArrayBuffer to Uint8Array for fetch compatibility
+const body = fileBuffer instanceof Buffer ? new Uint8Array(fileBuffer) : new Uint8Array(fileBuffer)
+```
+
+This pattern avoids TypeScript errors with fetch's BodyInit type that doesn't accept Node's Buffer directly.
+
 ### Build System
 
-- **tsup**: Primary build tool configured in `tsup.config.ts`
-- **Dual Output**: Development builds go to `lib/`, production builds to `dist/`
-- **Format Support**: Generates both CommonJS (`cjs`) and ES modules (`esm`)
-- **TypeScript**: Generates declaration files automatically
+- **tsup**: Builds CJS, ESM, and DTS simultaneously
+- **Environment-based output**: Production → `dist/`, Development → `lib/`
+- **Entry points**: All `src/**/*.ts` files for proper chunking
+- **CLI binary**: `src/bin.ts` → `dist/bin.js` with shebang
 
-### Testing Framework
+## LinkedIn API Requirements
 
-- **Vitest**: Modern test runner with hot reload and coverage
-- **Configuration**: `vitest.config.ts` with Node.js environment
-- **Coverage**: Uses v8 provider with text/json/html reports
+### Required OAuth Scopes
 
-### Code Quality Tools
+**Personal APIs**:
 
-- **ESLint**: Flat config setup in `eslint.config.mjs` with TypeScript support
-- **Prettier**: Integrated with ESLint for consistent formatting
-- **Import Sorting**: Automatic import organization via `simple-import-sort`
+- `openid`, `profile`, `email`, `w_member_social`
 
-### Package Configuration
+**Company APIs** (requires partnership):
 
-- **Entry Points**: Main source in `src/index.ts`
-- **Exports**: Supports both `require()` and `import` with proper type definitions
-- **Publishing**: Configured for npm with public access
+- `w_organization_social`, `rw_organization_admin`, `r_organization_social`, `r_analytics`
 
-## Key Files
+### Rate Limits
 
-- `src/index.ts` - Main library entry point
-- `test/*.spec.ts` - Test files using Vitest
-- `tsup.config.ts` - Build configuration with environment-based settings
-- `vitest.config.ts` - Test configuration with coverage settings
-- `eslint.config.mjs` - Linting rules and TypeScript integration
+- Member/Personal: 150 requests/day
+- Application: 100,000 requests/day
+- Marketing API: Higher limits with partnership approval
+
+### Environment Variables
+
+**Required**:
+
+- `LINKEDIN_CLIENT_ID`
+- `LINKEDIN_CLIENT_SECRET`
+
+**For API Access**:
+
+- `LINKEDIN_ACCESS_TOKEN` (obtained via OAuth flow)
+- `LINKEDIN_REFRESH_TOKEN` (for automatic refresh)
+
+**Server Config**:
+
+- `TRANSPORT_TYPE`: `stdio` (Claude Desktop/Cursor) or `http` (default)
+- `PORT`: HTTP server port (default: 3000)
+- `HOST`: Bind address (default: 0.0.0.0)
+
+**Optional**:
+
+- `OAUTH_ENABLED`: Enable bearer token auth for HTTP mode
+- `OAUTH_TOKEN`: Required if OAUTH_ENABLED=true
+
+## Testing Strategy
+
+- Tests use Vitest with Node.js environment
+- Focus on formatters and type transformations (API calls are mocked in tests)
+- No integration tests with real LinkedIn API (requires live credentials)
+
+## Common Patterns
+
+### Adding a New MCP Tool
+
+1. Define parameter schema with Zod in `src/index.ts`
+2. Get appropriate client: `getLinkedInClient()` or `getMarketingClient()`
+3. Call client method and handle errors
+4. Format response using utilities from `src/utils/formatters.ts`
+5. Return formatted string for user display
+
+### Handling Unknown API Responses
+
+LinkedIn API responses vary by endpoint. Use this pattern:
+
+```typescript
+private normalizeEntity(data: unknown): EntityType {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const d = data as any
+  return {
+    id: d.id || "",
+    field: d.field?.nested?.value || d.alternateField || ""
+  }
+}
+```
+
+### Transport Mode Considerations
+
+- **stdio mode**: Single request/response, no persistent connection
+- **HTTP mode**: Supports SSE streaming at `/sse` endpoint
+- Authentication check runs at startup for both modes
