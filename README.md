@@ -265,7 +265,21 @@ docker compose logs -f
 docker compose down
 ```
 
-### Using Docker Directly
+### Using Pre-built Image
+
+```bash
+# Pull from GitHub Container Registry
+docker pull ghcr.io/jordanburke/linkedin-api-mcp-server:latest
+
+# Run container
+docker run -d \
+  --name linkedin-mcp \
+  -p 3000:3000 \
+  --env-file .env \
+  ghcr.io/jordanburke/linkedin-api-mcp-server:latest
+```
+
+### Building Locally
 
 ```bash
 # Build Docker image

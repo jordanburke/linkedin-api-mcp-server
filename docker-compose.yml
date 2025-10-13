@@ -5,6 +5,8 @@ services:
     build: .
     # Or use the published image:
     # image: ghcr.io/jordanburke/linkedin-api-mcp-server:latest
+    # For specific version:
+    # image: ghcr.io/jordanburke/linkedin-api-mcp-server:v1.0.0
     ports:
       - "3000:3000"
     env_file:
