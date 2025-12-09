@@ -340,6 +340,16 @@ export type OAuthRefreshTokenResponse = {
   refresh_token?: string
 }
 
+// ===== SESSION TYPES =====
+
+export type LinkedInSession = {
+  accessToken: string
+  refreshToken?: string
+  expiresAt?: number
+  userId?: string
+  scope?: string[]
+}
+
 // ===== FORMATTED OUTPUT TYPES =====
 
 export type FormattedProfile = {

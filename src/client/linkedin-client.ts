@@ -192,16 +192,27 @@ export class LinkedInClient {
 
   /**
    * Get current authenticated user's profile
+   * Uses the userinfo endpoint for OpenID Connect compatibility
    */
   async getCurrentUserProfile(): Promise<LinkedInProfile> {
-    const response = await this.makeRequest("/me")
+    // Try userinfo endpoint first (OpenID Connect)
+    const response = await this.makeRequest("/userinfo")
 
     if (!response.ok) {
       throw new Error(`Failed to get current user profile: ${response.status}`)
     }
 
     const data = await response.json()
-    return this.normalizeProfile(data)
+    // userinfo returns: sub, name, given_name, family_name, picture, email, email_verified, locale
+    return {
+      id: data.sub || "",
+      firstName: data.given_name || data.name?.split(" ")[0] || "",
+      lastName: data.family_name || data.name?.split(" ").slice(1).join(" ") || "",
+      headline: "",
+      profilePicture: data.picture || "",
+      email: data.email,
+      vanityName: "",
+    }
   }
 
   /**

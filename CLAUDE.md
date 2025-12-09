@@ -139,21 +139,28 @@ This pattern avoids TypeScript errors with fetch's BodyInit type that doesn't ac
 - `LINKEDIN_CLIENT_ID`
 - `LINKEDIN_CLIENT_SECRET`
 
-**For API Access**:
-
-- `LINKEDIN_ACCESS_TOKEN` (obtained via OAuth flow)
-- `LINKEDIN_REFRESH_TOKEN` (for automatic refresh)
-
 **Server Config**:
 
 - `TRANSPORT_TYPE`: `stdio` (Claude Desktop/Cursor) or `http` (default)
 - `PORT`: HTTP server port (default: 3000)
 - `HOST`: Bind address (default: 0.0.0.0)
+- `BASE_URL`: Public URL for OAuth callbacks (default: `http://localhost:PORT`)
 
-**Optional**:
+**Legacy/Manual Token Mode** (optional, if not using automatic OAuth):
 
-- `OAUTH_ENABLED`: Enable bearer token auth for HTTP mode
-- `OAUTH_TOKEN`: Required if OAUTH_ENABLED=true
+- `LINKEDIN_ACCESS_TOKEN` (obtained via OAuth flow)
+- `LINKEDIN_REFRESH_TOKEN` (for automatic refresh)
+
+### OAuth Flow
+
+The server uses FastMCP's OAuth Proxy to handle LinkedIn authentication automatically:
+
+1. MCP client connects and discovers `/.well-known/oauth-authorization-server`
+2. Client uses discovered endpoints to initiate OAuth flow
+3. User authenticates with LinkedIn in browser
+4. Server exchanges code for tokens via `/oauth/callback`
+5. FastMCP issues short-lived JWTs that map to LinkedIn tokens
+6. Tools access LinkedIn tokens via `context.session`
 
 ## Testing Strategy
 

@@ -20,7 +20,13 @@ A Model Context Protocol (MCP) server that provides comprehensive tools for inte
 ### Dual Transport Support
 
 - **stdio**: For Claude Desktop and Cursor integration
-- **HTTP**: For remote access and web applications
+- **HTTP**: For remote access with automatic OAuth authentication
+
+### Seamless OAuth Flow
+
+- **Automatic Authentication**: MCP clients discover OAuth endpoints automatically
+- **No Token Copy/Paste**: Browser-based login flow handles token exchange
+- **Token Refresh**: Automatic token refresh keeps sessions alive
 
 ## 🔧 Available Tools
 
@@ -76,15 +82,22 @@ Add to your MCP configuration:
 }
 ```
 
-### For HTTP Server
+### For HTTP Server (Recommended)
 
 ```bash
-# Run HTTP server on port 3000
-LINKEDIN_CLIENT_ID=xxx LINKEDIN_CLIENT_SECRET=yyy LINKEDIN_ACCESS_TOKEN=zzz npx linkedin-api-mcp-server
-
-# With OAuth protection
-OAUTH_ENABLED=true OAUTH_TOKEN=your_token npx linkedin-api-mcp-server
+# Run HTTP server with automatic OAuth flow
+LINKEDIN_CLIENT_ID=xxx LINKEDIN_CLIENT_SECRET=yyy npx linkedin-api-mcp-server
 ```
+
+The server automatically exposes OAuth endpoints:
+
+- `/.well-known/oauth-authorization-server` - OAuth discovery
+- `/oauth/register` - Dynamic client registration
+- `/oauth/authorize` - Start LinkedIn OAuth flow
+- `/oauth/token` - Token exchange
+- `/oauth/callback` - LinkedIn callback handler
+
+MCP clients that support OAuth will automatically discover and use these endpoints!
 
 ## 🔑 LinkedIn API Setup
 
@@ -122,56 +135,49 @@ See [LinkedIn OAuth Documentation](https://learn.microsoft.com/en-us/linkedin/sh
 
 ## ⚙️ Configuration
 
-### Minimal Configuration (Just 3 Variables!)
+### Minimal Configuration (Just 2 Variables!)
 
-To get started, you only need these three environment variables:
+To get started with automatic OAuth, you only need:
 
 ```bash
 # Required - Get these from LinkedIn Developer Portal
 LINKEDIN_CLIENT_ID=your_client_id
 LINKEDIN_CLIENT_SECRET=your_client_secret
-
-# Required for API functionality - Obtain via OAuth flow
-LINKEDIN_ACCESS_TOKEN=your_access_token
 ```
 
-### Recommended: Add Auto-Refresh
+That's it! The OAuth flow handles token exchange automatically.
 
-Add this fourth variable to enable automatic token refresh (prevents token expiration):
+### OAuth Flow (How It Works)
 
-```bash
-# Enables automatic token refresh before expiration (~60 min)
-LINKEDIN_REFRESH_TOKEN=your_refresh_token
-```
-
-**How refresh works:**
-
-- The server automatically checks token expiry before each API call
-- If expired, it refreshes using the refresh token (no manual intervention)
-- Failed 401 requests trigger automatic retry with new token
+1. Start the server with just `CLIENT_ID` and `CLIENT_SECRET`
+2. MCP client connects and discovers OAuth endpoints
+3. User is redirected to LinkedIn to authorize
+4. LinkedIn redirects back with authorization code
+5. Server exchanges code for tokens automatically
+6. Tokens are stored in session and used for API calls
 
 ### Optional Configuration
 
 All these have sensible defaults - only override if needed:
 
 ```bash
-# OAuth flow (not needed for Docker usage)
-LINKEDIN_REDIRECT_URI=http://localhost:3000/callback
-
 # Server settings (defaults shown)
-TRANSPORT_TYPE=http  # or "stdio" for Claude Desktop
+TRANSPORT_TYPE=http  # or "stdio" for Claude Desktop (note: OAuth requires HTTP)
 PORT=3000
 HOST=0.0.0.0
+BASE_URL=http://localhost:3000  # Public URL for OAuth callbacks
 
-# Optional bearer token auth for HTTP mode
-OAUTH_ENABLED=false
-OAUTH_TOKEN=your_secure_token
+# LinkedIn API scopes (comma-separated, defaults to personal scopes)
+# Add company scopes if you have Marketing Developer Platform access
 ```
 
-### Generate OAuth Token
+### Legacy Mode (Manual Token)
+
+If you prefer manual token management or use stdio transport:
 
 ```bash
-npx linkedin-api-mcp-server --generate-token
+LINKEDIN_ACCESS_TOKEN=your_access_token
+LINKEDIN_REFRESH_TOKEN=your_refresh_token  # Optional, for auto-refresh
 ```
 
 ## 🛠️ Development
