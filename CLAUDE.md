@@ -196,5 +196,5 @@ private normalizeEntity(data: unknown): EntityType {
 ### Transport Mode Considerations
 
 - **stdio mode**: Single request/response, no persistent connection
-- **HTTP mode**: Supports SSE streaming at `/sse` endpoint
+- **HTTP mode**: Uses HTTP streaming at `/mcp` endpoint (FastMCP standard)
 - Authentication check runs at startup for both modes

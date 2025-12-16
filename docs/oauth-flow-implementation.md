@@ -26,8 +26,7 @@ Add OAuth login capability by running Express/Hono alongside FastMCP to handle O
 
 ```
 FastMCP Server (port 3000)
-├── /mcp (MCP endpoint)
-├── /sse (SSE endpoint)
+├── /mcp (MCP HTTP streaming endpoint)
 └── Tools require pre-configured tokens
 ```
 
@@ -42,8 +41,7 @@ Combined Server (port 3000)
 │   └── GET / → Landing page with "Login with LinkedIn" button
 │
 └── FastMCP (mounted on same server)
-    ├── /mcp (MCP endpoint)
-    ├── /sse (SSE endpoint)
+    ├── /mcp (MCP HTTP streaming endpoint)
     └── Tools use tokens from OAuth flow
 ```
 

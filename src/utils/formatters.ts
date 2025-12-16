@@ -17,12 +17,17 @@ export function formatProfile(profile: LinkedInProfile): FormattedProfile {
     ? `https://www.linkedin.com/in/${profile.vanityName}`
     : `https://www.linkedin.com/in/${profile.id}`
 
+  const picture =
+    typeof profile.profilePicture === "string"
+      ? profile.profilePicture
+      : profile.profilePicture?.url || profile.profilePicture?.displayImage
+
   return {
     name,
     headline: profile.headline || "No headline",
     location: profile.location?.name || "Location not specified",
     profileUrl,
-    picture: profile.profilePicture?.url,
+    picture,
     summary: "",
   }
 }

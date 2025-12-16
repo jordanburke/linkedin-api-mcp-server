@@ -18,14 +18,17 @@ export type MediaUrn = string
 
 export type LinkedInProfile = {
   id: string
-  urn: PersonUrn
+  urn?: PersonUrn
   firstName: string
   lastName: string
   headline?: string
-  profilePicture?: {
-    displayImage: string
-    url?: string
-  }
+  email?: string
+  profilePicture?:
+    | {
+        displayImage: string
+        url?: string
+      }
+    | string
   vanityName?: string
   location?: {
     name: string
