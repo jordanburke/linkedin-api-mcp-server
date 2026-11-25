@@ -346,3 +346,7 @@ MIT License - see LICENSE file for details
 ## 🙏 Credits
 
 Built with [FastMCP](https://github.com/jlowin/fastmcp) and inspired by the MCP ecosystem.
+
+---
+
+Maintained by [Jordan Burke](https://github.com/jordanburke) · **Affiliated with <a href="https://sapientsai.com/"><img src="https://sapientsai.com/images/logo.svg" alt="" width="20" style="vertical-align: middle;"> SapientsAI</a>**
